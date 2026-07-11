@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test Sipariş Sayfası</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; background: #f8fafc; }
+      .page { max-width: 1100px; margin: 0 auto; padding: 24px; }
+      .header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+      .header h1 { margin: 0; font-size: 1.8rem; }
+      .panel { background: #ffffff; border: 1px solid rgba(15,23,42,0.08); border-radius: 20px; box-shadow: 0 18px 35px rgba(15,23,42,0.08); padding: 24px; }
+      .grid { display: grid; gap: 20px; }
+      .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .section-title { font-size: 1rem; text-transform: uppercase; letter-spacing: .12em; color: #475569; margin-bottom: 16px; }
+      .card { border-radius: 18px; border: 1px solid rgba(15,23,42,0.08); padding: 18px; background: #f8fafc; transition: transform .16s ease, box-shadow .16s ease; }
+      .card:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(15,23,42,0.08); }
+      .product-name { font-weight: 700; margin-bottom: 6px; }
+      .product-desc { color: #64748b; font-size: 0.95rem; margin-bottom: 14px; }
+      .product-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .price { font-weight: 700; color: #0f172a; }
+      .button { background: linear-gradient(90deg,#6366f1,#818cf8); color: white; border: none; border-radius: 999px; padding: 12px 20px; font-weight: 700; cursor: pointer; transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease; }
+      .button:hover { transform: translateY(-1px); box-shadow: 0 12px 24px rgba(99,102,241,0.2); }
+      .button.secondary { background: #e2e8f0; color: #0f172a; }
+      .button.danger { background: #ef4444; }
+      .small-btn { background: #e2e8f0; border-radius: 999px; border: none; padding: 8px 12px; cursor: pointer; }
+      .small-btn.active { background: #6366f1; color: white; }
+      .input-row { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; margin-bottom: 16px; }
+      label { display: block; font-size: 0.95rem; color: #475569; margin-bottom: 8px; }
+      input, select, textarea { width: 100%; border-radius: 14px; border: 1px solid rgba(15,23,42,0.12); padding: 14px 16px; font-size: 1rem; color: #0f172a; background: #ffffff; }
+      textarea { resize: vertical; min-height: 120px; }
+      .summary { display: flex; flex-direction: column; gap: 12px; }
+      .summary-row { display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+      .summary-row span:last-child { color: #0f172a; }
+      .hidden { display: none; }
+      @media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="header">
+        <div>
+          <h1>Test Sipariş Sayfası</h1>
+          <p style="margin:0;color:#64748b;">Yeni bir sipariş girip sistemin sipariş akışını test edebilirsiniz.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <section class="panel">
+          <div class="section-title">Sipariş Detayları</div>
+          <div id="products" class="grid grid-2"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-title">Sipariş Formu</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+            <button type="button" class="small-btn active" data-platform="yemeksepeti">Yemeksepeti</button>
+            <button type="button" class="small-btn" data-platform="trendyol">Trendyol</button>
+            <button type="button" class="small-btn" data-platform="getir">Getir</button>
+          </div>
+          <div class="input-row">
+            <label>
+              Platform
+              <select id="platformSelect">
+                <option value="yemeksepeti">Yemeksepeti</option>
+                <option value="trendyol">Trendyol</option>
+                <option value="getir">Getir</option>
+              </select>
+            </label>
+            <label>
+              Masa / Teslimat Noktası
+              <input id="tableInput" placeholder="Masa 1 veya Adres" />
+            </label>
+          </div>
+          <label>
+            Not
+            <textarea id="orderNote" placeholder="Örnek: Az acılı, kola ayrı..." rows="3"></textarea>
+          </label>
+          <div class="summary">
+            <div class="summary-row"><span>Toplam Ürün</span><span id="itemCount">0</span></div>
+            <div class="summary-row"><span>Toplam Tutar</span><span id="totalAmount">₺0</span></div>
+          </div>
+          <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap;">
+            <button class="button" id="placeOrderBtn">Sipariş Ver</button>
+            <button class="button secondary" id="resetOrderBtn">Sıfırla</button>
+          </div>
+          <div id="orderResult" class="panel hidden" style="margin-top:20px;"></div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const products = [
+        { id: 'd1', name: 'Adana Döner', category: 'Dönerler', price: 95 },
+        { id: 'd2', name: 'Tavuk Döner', category: 'Dönerler', price: 85 },
+        { id: 'i1', name: 'Kola', category: 'İçecekler', price: 20 },
+        { id: 'i2', name: 'Ayran', category: 'İçecekler', price: 12 },
+        { id: 'a1', name: 'Patates Kızartması', category: 'Atıştırmalıklar', price: 40 },
+        { id: 'a2', name: 'Soslu Cips', category: 'Atıştırmalıklar', price: 25 }
+      ];
+
+      const order = { items: [] };
+      const orderChannel = window.BroadcastChannel ? new BroadcastChannel('order-events') : null;
+
+      const productsNode = document.getElementById('products');
+      const itemCountNode = document.getElementById('itemCount');
+      const totalAmountNode = document.getElementById('totalAmount');
+      const orderResult = document.getElementById('orderResult');
+      const platformSelect = document.getElementById('platformSelect');
+      const tableInput = document.getElementById('tableInput');
+      const orderNote = document.getElementById('orderNote');
+      const placeOrderBtn = document.getElementById('placeOrderBtn');
+      const resetOrderBtn = document.getElementById('resetOrderBtn');
+
+      function formatPrice(value) { return '₺' + value.toFixed(2).replace('.00',''); }
+      function renderProducts() {
+        productsNode.innerHTML = '';
+        products.forEach(product => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div class="product-name">${product.name}</div>
+            <div class="product-desc">${product.category}</div>
+            <div class="product-meta">
+              <div class="price">${formatPrice(product.price)}</div>
+              <button class="small-btn" data-id="${product.id}">Ekle</button>
+            </div>
+          `;
+          productsNode.appendChild(card);
+        });
+      }
+
+      function updateSummary() {
+        const totalItems = order.items.reduce((acc, item) => acc + item.qty, 0);
+        const totalAmount = order.items.reduce((acc, item) => acc + item.qty * item.price, 0);
+        itemCountNode.textContent = totalItems;
+        totalAmountNode.textContent = formatPrice(totalAmount);
+      }
+
+      function addProduct(productId) {
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
+        const existing = order.items.find(item => item.id === productId);
+        if (existing) {
+          existing.qty += 1;
+        } else {
+          order.items.push({ ...product, qty: 1 });
+        }
+        updateSummary();
+      }
+
+      productsNode.addEventListener('click', (event) => {
+        const btn = event.target.closest('button');
+        if (!btn) return;
+        const productId = btn.getAttribute('data-id');
+        if (!productId) return;
+        addProduct(productId);
+      });
+
+      const platformButtons = Array.from(document.querySelectorAll('[data-platform]'));
+      platformButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          platformSelect.value = btn.getAttribute('data-platform');
+          platformButtons.forEach(x=>x.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+
+      function emitOrderEvent(data) {
+        try {
+          if (orderChannel) orderChannel.postMessage(data);
+        } catch (e) { }
+        try {
+          localStorage.setItem('order-event', JSON.stringify({ ...data, _ts: Date.now() }));
+        } catch (e) { }
+      }
+
+      placeOrderBtn.addEventListener('click', () => {
+        if (order.items.length === 0) {
+          alert('Lütfen önce en az bir ürün ekleyin.');
+          return;
+        }
+        const platform = platformSelect.value;
+        const location = tableInput.value.trim() || 'Belirtilmedi';
+        const note = orderNote.value.trim() || 'Yok';
+        const total = order.items.reduce((acc, item) => acc + item.qty * item.price, 0);
+        const orderId = 'ORD-' + Date.now();
+        orderResult.classList.remove('hidden');
+        orderResult.innerHTML = `
+          <h2 style="margin-top:0;font-size:1.2rem;">Sipariş Oluşturuldu</h2>
+          <p style="margin:0.5rem 0;color:#475569;">Sipariş kimliği: <strong>${orderId}</strong></p>
+          <p style="margin:0.5rem 0;color:#475569;">Platform: <strong>${platform}</strong></p>
+          <p style="margin:0.5rem 0;color:#475569;">Masa / Adres: <strong>${location}</strong></p>
+          <p style="margin:0.5rem 0;color:#475569;">Not: <strong>${note}</strong></p>
+          <div style="margin-top:16px;border-radius:16px;background:#eef2ff;padding:18px;">
+            <div style="font-weight:700;margin-bottom:12px;">Sipariş Özeti</div>
+            ${order.items.map(item => `<div style="display:flex;justify-content:space-between;color:#0f172a;margin-bottom:8px;"><span>${item.name} x${item.qty}</span><span>${formatPrice(item.qty * item.price)}</span></div>`).join('')}
+            <hr style="border:none;border-top:1px solid rgba(15,23,42,0.08);margin:12px 0;" />
+            <div style="display:flex;justify-content:space-between;font-weight:700;"><span>Toplam</span><span>${formatPrice(total)}</span></div>
+          </div>
+        `;
+        emitOrderEvent({ event: 'orderCreated', orderId, platform, total: formatPrice(total), location, note, items: order.items });
+      });
+
+      resetOrderBtn.addEventListener('click', () => {
+        order.items = [];
+        updateSummary();
+        orderResult.classList.add('hidden');
+        orderResult.innerHTML = '';
+      });
+
+      renderProducts();
+      updateSummary();
+    </script>
+  </body>
+</html>
